@@ -10,22 +10,20 @@
 import string
 import secrets
 from datetime import datetime
+import sqlite3
 
 from crypto.encryption import encrypt_password, decrypt_password
-from crypto.vault import init_db, store_password, retrieve_password
 
-LOG_FILE = "logs.txt"
+DB_FILE = "vault/passwords.db"
+LOG_FILE = "logs/logs.txt"
 
 # ------------------------------------------------
 # Logging
 # ------------------------------------------------
 def log_action(user: str, action: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    try:
-        with open(LOG_FILE, "a") as f:
-            f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
-    except Exception as e:
-        print("ERROR writing to log file:", e)
+    with open(LOG_FILE, "a") as f:
+        f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
 
 # ------------------------------------------------
 # Password Generator
@@ -40,8 +38,47 @@ def generate_password(length: int = 16) -> str:
         string.digits +
         string.punctuation
     )
-
     return ''.join(secrets.choice(charset) for _ in range(length))
+
+# ------------------------------------------------
+# Database Functions
+# ------------------------------------------------
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS passwords (
+            service TEXT NOT NULL,
+            username TEXT NOT NULL,
+            password BLOB NOT NULL,
+            PRIMARY KEY (service, username)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def store_password(service: str, username: str, encrypted_password: bytes):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR REPLACE INTO passwords (service, username, password)
+        VALUES (?, ?, ?)
+    ''', (service, username, encrypted_password))
+    conn.commit()
+    conn.close()
+
+def retrieve_password(service: str, username: str):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT password FROM passwords
+        WHERE service = ? AND username = ?
+    ''', (service, username))
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return result[0]
+    return None
 
 # ------------------------------------------------
 # Main Execution
@@ -62,11 +99,18 @@ def main():
     store_password(service, username, encrypted)
     log_action(user, f"Stored password for {service}")
 
+    # Print generated password (displayed once)
+    print("Password generated and stored securely.")
+    print("Generated password (displayed once):", password)
+
     # Demonstration: retrieving the password (optional)
     retrieved_enc = retrieve_password(service, username)
     if retrieved_enc:
         decrypted = decrypt_password(retrieved_enc)
         print("Retrieved password:", decrypted)
 
-    print("Password generated and stored securely.")
-    print("Generated password (displayed once):", password)
+# ------------------------------------------------
+# Run main if script executed directly
+# ------------------------------------------------
+if __name__ == "__main__":
+    main()
