@@ -1,10 +1,6 @@
 # =================================================================
 # SecureSphere Innovations
-# Secure Password Manager
-#
-# Made by Collaborative-Fidelity
-# Copyright (c) 2026 Collaborative-Fidelity
-# All Rights Reserved.
+# Secure Password Manager (Search Enabled)
 # =================================================================
 
 import string
@@ -22,66 +18,61 @@ except ImportError:
 
 LOG_FILE = "logs.txt"
 
-# --- Logging ---
 def log_action(user: str, action: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a") as f:
         f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
 
-# --- Password Generator ---
 def generate_password(length: int = 16) -> str:
-    if length < 12:
-        raise ValueError("Password length must be at least 12 characters")
-
-    charset = (
-        string.ascii_lowercase +
-        string.ascii_uppercase +
-        string.digits +
-        string.punctuation
-    )
+    charset = string.ascii_letters + string.digits + string.punctuation
     return ''.join(secrets.choice(charset) for _ in range(length))
 
-# --- Main Execution ---
-def main():
-    # Initialize the database (creates table if missing)
-    try:
-        init_db()
-    except NameError:
-        print("[SKIP] Database initialization skipped (vault module not ready).")
-
-    user = "admin"
-    service = "example.com"
-    username = "admin_user"
-
-    print("\n--- SecureSphere Password Manager Starting ---")
-
-    # 1. Generate and encrypt password
-    password = generate_password()
-    print(f"Generated New Password: {password}")
+def create_new_entry():
+    """Logic for generating and saving a new password."""
+    service = input("Enter the service name (e.g., Netflix): ")
+    username = input("Enter the username: ")
     
+    password = generate_password()
     encrypted = encrypt_password(password)
-    print(f"Encrypted Version: {encrypted}")
+    
+    # Save to Database
+    store_password(service, username, encrypted)
+    log_action("admin", f"Created new password for {service}")
+    
+    print(f"\n[SUCCESS] New password for {service} generated!")
+    print(f"Password: {password}")
 
-    # 2. Store in SQLite vault
-    try:
-        store_password(service, username, encrypted)
-        log_action(user, f"Stored password for {service}")
-        print("Password stored and logged successfully.")
-    except NameError:
-        print("[ERROR] Could not store password (vault functions missing).")
+def find_existing_entry():
+    """Logic for searching and decrypting a password."""
+    service = input("Enter the service name to search for: ")
+    username = input("Enter the username: ")
+    
+    encrypted_pwd = retrieve_password(service, username)
+    if encrypted_pwd:
+        decrypted = decrypt_password(encrypted_pwd)
+        print(f"\n[FOUND] Password for {service} ({username}): {decrypted}")
+    else:
+        print(f"\n[NOT FOUND] No record for {service}.")
 
-    # 3. Demonstration: retrieving the password
-    try:
-        retrieved_enc = retrieve_password(service, username)
-        if retrieved_enc:
-            decrypted = decrypt_password(retrieved_enc)
-            print(f"Decrypted Password for {service}: {decrypted}")
-    except NameError:
-        pass
+def main():
+    # Initialize the database
+    init_db()
+    
+    print("\n--- SecureSphere Password Manager ---")
+    print("1. Generate & Save New Password")
+    print("2. Search for Existing Password")
+    print("3. Exit")
+    
+    choice = input("\nSelect an option (1-3): ")
+    
+    if choice == "1":
+        create_new_entry()
+    elif choice == "2":
+        find_existing_entry()
+    elif choice == "3":
+        print("Exiting SecureSphere...")
+    else:
+        print("Invalid selection.")
 
-    print("\n--- SecureSphere Process Complete ---")
-
-# --- THE START BUTTON ---
-# This part MUST be at the very bottom and have NO spaces before it.
 if __name__ == "__main__":
     main()
