@@ -1,42 +1,30 @@
-# ================================================================
-# SecureSphere Innovations
-# Secure Password Manager
-#
-# Made by Collaborative-Fidelity
-# Copyright (c) 2026 Collaborative-Fidelity
-# All Rights Reserved.
-#
-# Module: encryption.py
-# Purpose: Centralized encryption and decryption logic
-# ================================================================
+# =================================================================
+# MODULE: crypto/encryption.py
+# PURPOSE: Handle all Fernet AES encryption and key management.
+# =================================================================
 
 import os
 from cryptography.fernet import Fernet
 
 KEY_FILE = "secure_key.key"
 
-def load_or_create_key() -> bytes:
-    """
-    Loads an existing encryption key or creates one if missing.
-    """
+def load_or_create_key():
+    """Ensures an encryption key exists and returns it."""
     if not os.path.exists(KEY_FILE):
-        with open(KEY_FILE, "wb") as key_file:
-            key_file.write(Fernet.generate_key())
+        with open(KEY_FILE, "wb") as f:
+            f.write(Fernet.generate_key())
+    
+    with open(KEY_FILE, "rb") as f:
+        return f.read()
 
-    with open(KEY_FILE, "rb") as key_file:
-        return key_file.read()
-
-# Initialize Fernet instance once
-FERNET = Fernet(load_or_create_key())
+# Initialize the Fernet engine once for the whole app to use
+_key = load_or_create_key()
+cipher_suite = Fernet(_key)
 
 def encrypt_password(plaintext_password: str) -> bytes:
-    """
-    Encrypt a plaintext password.
-    """
-    return FERNET.encrypt(plaintext_password.encode())
+    """Converts string password to encrypted bytes."""
+    return cipher_suite.encrypt(plaintext_password.encode())
 
 def decrypt_password(encrypted_password: bytes) -> str:
-    """
-    Decrypt an encrypted password.
-    """
-    return FERNET.decrypt(encrypted_password).decode()
+    """Converts encrypted bytes back to a readable string."""
+    return cipher_suite.decrypt(encrypted_password).decode()
