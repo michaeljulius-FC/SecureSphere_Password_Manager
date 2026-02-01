@@ -9,7 +9,11 @@ To address this, SecureSphere Innovations has implemented a **Secure Password Ge
 Our approach leverages **modern security practices** to deliver both ease of use and the highest level of **protection against cyber threats**, offering users confidence in an increasingly complex digital world.
 A secure, command-line-based password management system built with Python and SQLite3. [cite_start]This project focuses on **Collaborative Fidelity**, ensuring a modular design that prioritizes data integrity and industry-standard security practices[cite: 3, 4].
 
-## Key Features
+# SecureSphere Password Manager
+
+A secure, command-line-based password management system built with Python and SQLite3. [cite_start]This project focuses on **Collaborative Fidelity**, ensuring a modular design that prioritizes data integrity and industry-standard security practices[cite: 3, 4].
+
+## 🔐 Key Features
 
 - [cite_start]**Master Authentication Gatekeeper**: Uses SHA-256 hashing to verify user identity before granting access to the vault[cite: 11, 12].
 - [cite_start]**Hidden Password Input**: Utilizes the `getpass` module to mask the Master Password during login to prevent "shoulder surfing"[cite: 13].
@@ -17,13 +21,13 @@ A secure, command-line-based password management system built with Python and SQ
 - [cite_start]**Robust Password Generation**: Automatically generates 16-character secure passwords using the `secrets` library, or allows for custom manual entry[cite: 15, 16].
 - [cite_start]**Action Logging**: Maintains a `logs.txt` file to track system activity and modifications for audit purposes[cite: 21, 22].
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 - **Language**: Python 3.x
 - **Database**: SQLite3
 - **Security**: SHA-256 Hashing, AES-style logic, and masked terminal inputs.
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 - Python installed on your machine.
@@ -32,3 +36,13 @@ A secure, command-line-based password management system built with Python and SQ
 1. **Clone the repository**:
    ```bash
    git clone [https://github.com/your-username/SecureSphere_Password_Manager.git](https://github.com/your-username/SecureSphere_Password_Manager.git)
+2. Initialize the Master Password: Run the setup script to create your local security fingerprint:
+
+Bash
+python setup_master.py
+
+3. python password_manager.py
+
+
+🛡️ Security Note
+This project uses a .gitignore to ensure that sensitive local files—such as master.hash, secure_key.key, and passwords.db—are never uploaded to the public repository.
