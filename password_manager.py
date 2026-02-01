@@ -47,16 +47,26 @@ def generate_password(length: int = 16) -> str:
 # Main Execution
 # ------------------------------------------------
 def main():
-    print("Starting SecureSphere Password Manager...")  # Debug print
-
     # Initialize the database (creates table if missing)
-    try:
-        init_db()
-        print("Database initialized successfully.")
-    except Exception as e:
-        print("ERROR initializing database:", e)
-        return
+    init_db()
 
     user = "admin"
     service = "example.com"
-    username =
+    username = "admin_user"
+
+    # Generate and encrypt password
+    password = generate_password()
+    encrypted = encrypt_password(password)
+
+    # Store in SQLite vault
+    store_password(service, username, encrypted)
+    log_action(user, f"Stored password for {service}")
+
+    # Demonstration: retrieving the password (optional)
+    retrieved_enc = retrieve_password(service, username)
+    if retrieved_enc:
+        decrypted = decrypt_password(retrieved_enc)
+        print("Retrieved password:", decrypted)
+
+    print("Password generated and stored securely.")
+    print("Generated password (displayed once):", password)
