@@ -36,27 +36,35 @@ def create_new_entry():
     encrypted = encrypt_password(password)
     
     # Save to Database
-    store_password(service, username, encrypted)
-    log_action("admin", f"Created new password for {service}")
-    
-    print(f"\n[SUCCESS] New password for {service} generated!")
-    print(f"Password: {password}")
+    try:
+        store_password(service, username, encrypted)
+        log_action("admin", f"Created new password for {service}")
+        print(f"\n[SUCCESS] New password for {service} generated!")
+        print(f"Password: {password}")
+    except Exception as e:
+        print(f"[ERROR] Failed to save password: {e}")
 
 def find_existing_entry():
     """Logic for searching and decrypting a password."""
     service = input("Enter the service name to search for: ")
     username = input("Enter the username: ")
     
-    encrypted_pwd = retrieve_password(service, username)
-    if encrypted_pwd:
-        decrypted = decrypt_password(encrypted_pwd)
-        print(f"\n[FOUND] Password for {service} ({username}): {decrypted}")
-    else:
-        print(f"\n[NOT FOUND] No record for {service}.")
+    try:
+        encrypted_pwd = retrieve_password(service, username)
+        if encrypted_pwd:
+            decrypted = decrypt_password(encrypted_pwd)
+            print(f"\n[FOUND] Password for {service} ({username}): {decrypted}")
+        else:
+            print(f"\n[NOT FOUND] No record for {service}.")
+    except Exception as e:
+        print(f"[ERROR] Search failed: {e}")
 
 def main():
     # Initialize the database
-    init_db()
+    try:
+        init_db()
+    except Exception:
+        pass
     
     print("\n--- SecureSphere Password Manager ---")
     print("1. Generate & Save New Password")
@@ -74,5 +82,7 @@ def main():
     else:
         print("Invalid selection.")
 
+# --- THE START BUTTON ---
+# Look closely: the 'if' is on the left, but 'main()' is indented.
 if __name__ == "__main__":
     main()
