@@ -40,6 +40,21 @@ def retrieve_password(service, username):
     conn.close()
     return result[0] if result else None
 
+def update_password(service, username, new_encrypted_pwd):
+    """Updates the password for an existing service and username."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    # The UPDATE command changes data in an existing row instead of adding a new one
+    cursor.execute('''
+        UPDATE credentials 
+        SET encrypted_password = ? 
+        WHERE service = ? AND username = ?
+    ''', (new_encrypted_pwd, service, username))
+    conn.commit()
+    changes = conn.total_changes
+    conn.close()
+    return changes > 0
+
 def delete_password(service, username):
     """Removes a specific credential from the database."""
     conn = sqlite3.connect(DB_FILE)
