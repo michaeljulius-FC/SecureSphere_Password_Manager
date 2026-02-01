@@ -11,9 +11,8 @@ import string
 import secrets
 from datetime import datetime
 
-from crypto.encryption import encrypt_password
-
-PASSWORD_FILE = "passwords.txt"
+from crypto.encryption import encrypt_password, decrypt_password
+from vault.storage import init_db, store_password, retrieve_password
 LOG_FILE = "logs.txt"
 
 # ------------------------------------------------
@@ -41,31 +40,27 @@ def generate_password(length: int = 16) -> str:
     return ''.join(secrets.choice(charset) for _ in range(length))
 
 # ------------------------------------------------
-# Password Storage (temporary file-based)
-# ------------------------------------------------
-def store_password(service: str, username: str, encrypted_password: bytes):
-    with open(PASSWORD_FILE, "ab") as f:
-        record = f"{service}|{username}|".encode() + encrypted_password + b"\n"
-        f.write(record)
-
-# ------------------------------------------------
 # Main Execution
 # ------------------------------------------------
 def main():
-    user = "admin"
+    # Initialize the database (creates table if missing)
+    init_db()
 
+    user = "admin"
     service = "example.com"
     username = "admin_user"
 
+    # Generate and encrypt password
     password = generate_password()
     encrypted = encrypt_password(password)
 
+    # Store in SQLite vault
     store_password(service, username, encrypted)
     log_action(user, f"Stored password for {service}")
 
-    print("Password generated and stored securely.")
-    print("Generated password (displayed once):", password)
-
-if __name__ == "__main__":
-    main()
+    # Demonstration: retrieving the password (optional)
+    retrieved_enc = retrieve_password(service, username)
+    if retrieved_enc:
+        decrypted = decrypt_password(retrieved_enc)
+        prin
 
