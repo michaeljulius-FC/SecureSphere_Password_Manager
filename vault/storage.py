@@ -1,45 +1,54 @@
-# ================================================================
-# SecureSphere Innovations
-# Secure Password Manager
-#
-# Made by Collaborative-Fidelity
-# Copyright (c) 2026 Collaborative-Fidelity
-# All Rights Reserved.
-#
-# Module: storage.py
-# Purpose: Handles secure storage of encrypted passwords
-# ================================================================
-
 import sqlite3
 
-DB_FILE = "vault.db"
+DB_FILE = "vault/passwords.db"
 
 def init_db():
-    """Initialize the SQLite database and create table if missing."""
-    with sqlite3.connect(DB_FILE) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS passwords (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                service TEXT NOT NULL,
-                username TEXT NOT NULL,
-                password BLOB NOT NULL
-            )
-        """)
-
-def store_password(service: str, username: str, encrypted_password: bytes):
-    """Store an encrypted password for a given service and username."""
-    with sqlite3.connect(DB_FILE) as conn:
-        conn.execute(
-            "INSERT INTO passwords (service, username, password) VALUES (?, ?, ?)",
-            (service, username, encrypted_password)
+    """Initializes the database and creates the passwords table if it doesn't exist."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS credentials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service TEXT NOT NULL,
+            username TEXT NOT NULL,
+            encrypted_password TEXT NOT NULL
         )
+    ''')
+    conn.commit()
+    conn.close()
 
-def retrieve_password(service: str, username: str):
-    """Retrieve the encrypted password for a service and username."""
-    with sqlite3.connect(DB_FILE) as conn:
-        cursor = conn.execute(
-            "SELECT password FROM passwords WHERE service=? AND username=?",
-            (service, username)
-        )
-        row = cursor.fetchone()
-        return row[0] if row else None
+def store_password(service, username, encrypted_pwd):
+    """Stores a new encrypted password in the database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO credentials (service, username, encrypted_password)
+        VALUES (?, ?, ?)
+    ''', (service, username, encrypted_pwd))
+    conn.commit()
+    conn.close()
+
+def retrieve_password(service, username):
+    """Retrieves an encrypted password for a specific service and user."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT encrypted_password FROM credentials 
+        WHERE service = ? AND username = ?
+    ''', (service, username))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else None
+
+def delete_password(service, username):
+    """Removes a specific credential from the database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM credentials 
+        WHERE service = ? AND username = ?
+    ''', (service, username))
+    conn.commit()
+    changes = conn.total_changes
+    conn.close()
+    return changes > 0
