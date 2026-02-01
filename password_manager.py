@@ -1,49 +1,71 @@
-# =================================================================
-# COPYRIGHT: (c) 2026 Collective-Fidelity. All Rights Reserved.
-# PROJECT: SecureSphere_Password_Manager
-# DESCRIPTION: Advanced secure password storage and generation.
-# =================================================================
+# ================================================================
+# SecureSphere Innovations
+# Secure Password Manager
+#
+# Made by Collaborative-Fidelity
+# Copyright (c) 2026 Collaborative-Fidelity
+# All Rights Reserved.
+# ================================================================
 
-import os  # For file operations (e.g., checking file existence)
-import string  # For combining letter, digit, and punctuation sets
-from datetime import datetime  # For logging timestamps
-from cryptography.fernet import Fernet  # For encryption and decryption of passwords
-import secrets  # Cryptographically secure random number module (for passwords)
+import string
+import secrets
+from datetime import datetime
 
-# --- CONSTANTS ---
+from crypto.encryption import encrypt_password
+
 PASSWORD_FILE = "passwords.txt"
 LOG_FILE = "logs.txt"
-KEY_FILE = "secure_key.key"  # File for storing the encryption key
-MASTER_USERS = {"admin": "SecureSphere2026"}  # Default admin login credentials
 
-# --- ENCRYPTION ---
-# Generate and save a key if KEY_FILE doesn't exist
-if not os.path.exists(KEY_FILE):
-    with open(KEY_FILE, "wb") as key_file:
-        key_file.write(Fernet.generate_key())  # Generate a secure key
-
-# Load the encryption key
-with open(KEY_FILE, "rb") as key_file:
-    ENCRYPTION_KEY = key_file.read()
-
-# Initialize Fernet for encryption and decryption
-fernet = Fernet(ENCRYPTION_KEY)
-
-# --- LOGGING FUNCTION ---
-def log_action(user, action):
-    """
-    PURPOSE: Security Auditing.
-    WHAT HAPPENS: Opens 'logs.txt' in append mode ('a') so we don't erase history.
-    It writes a timestamp, the user, and the action performed.
-    """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Current timestamp
+# ------------------------------------------------
+# Logging
+# ------------------------------------------------
+def log_action(user: str, action: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a") as f:
         f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
 
-# --- ENCRYPTION/DECRYPTION FUNCTIONALITY ---
-def encrypt_password(plaintext_password):
-    """
-    PURPOSE: Encrypts the given plaintext password.
-    INPUT: A plaintext password.
-    OUTPUT: The encrypted password (as a
-
+# ------------------------------------------------
+# Password Generator
+# ------------------------------------------------
+def generate_password(length: int = 16) -> str:
+    if length < 12:
+        raise ValueError("Password length must be at least 12 characters")
+
+    charset = (
+        string.ascii_lowercase +
+        string.ascii_uppercase +
+        string.digits +
+        string.punctuation
+    )
+
+    return ''.join(secrets.choice(charset) for _ in range(length))
+
+# ------------------------------------------------
+# Password Storage (temporary file-based)
+# ------------------------------------------------
+def store_password(service: str, username: str, encrypted_password: bytes):
+    with open(PASSWORD_FILE, "ab") as f:
+        record = f"{service}|{username}|".encode() + encrypted_password + b"\n"
+        f.write(record)
+
+# ------------------------------------------------
+# Main Execution
+# ------------------------------------------------
+def main():
+    user = "admin"
+
+    service = "example.com"
+    username = "admin_user"
+
+    password = generate_password()
+    encrypted = encrypt_password(password)
+
+    store_password(service, username, encrypted)
+    log_action(user, f"Stored password for {service}")
+
+    print("Password generated and stored securely.")
+    print("Generated password (displayed once):", password)
+
+if __name__ == "__main__":
+    main()
+
