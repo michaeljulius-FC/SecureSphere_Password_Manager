@@ -8,13 +8,15 @@ import secrets
 import string
 from datetime import datetime
 
-# We are importing the functions from your /crypto folder
+# Import modules from your project folders
 try:
     from crypto.encryption import encrypt_password, decrypt_password
+    # These will work once we add the vault logic in the next step
+    # from vault.storage import init_db, store_password, retrieve_password
     print("--- [SYSTEM] Encryption Modules Loaded Successfully ---")
 except ImportError:
-    print("--- [ERROR] Could not find crypto/encryption.py ---")
-    print("--- Ensure you have an empty __init__.py in the crypto folder ---")
+    print("--- [ERROR] Could not find project modules ---")
+    print("--- Ensure you have __init__.py files in crypto and vault folders ---")
 
 # --- CONSTANTS ---
 LOG_FILE = "logs.txt"
@@ -28,6 +30,8 @@ def log_action(user, action):
 
 # --- PASSWORD GENERATOR ---
 def generate_secure_password(length=16):
+    if length < 12:
+        length = 12
     alphabet = string.ascii_letters + string.digits + string.punctuation
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
@@ -46,12 +50,17 @@ def main():
         print(f"Encrypted Version: {encrypted_pwd}")
 
         # 3. Log the event
-        log_action(current_user, "Generated and Encrypted a new password.")
+        log_action(current_user, f"Generated and Encrypted a new password.")
         print("Action Logged Successfully.")
+        
+        # 4. Success Message
+        print("\n--- SecureSphere Process Complete ---")
+        
     except NameError:
-        print("Critical Error: Encryption functions not defined. Check your imports.")
+        print("\n[CRITICAL ERROR] Encryption functions are not available.")
+        print("Check that crypto/encryption.py exists and is correct.")
 
 # --- THE TRIGGER ---
-# This is the "Command" that tells Python to actually RUN the code above.
+# This is the "Start Button" that was missing or broken in your previous version
 if __name__ == "__main__":
     main()
