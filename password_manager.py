@@ -9,7 +9,7 @@ from datetime import datetime
 # Import project modules
 try:
     from crypto.encryption import encrypt_password, decrypt_password
-    from vault.storage import init_db, store_password, retrieve_password, delete_password, update_password
+    from vault.storage import init_db, store_password, retrieve_password, delete_password, update_password, list_all_services
     print("--- [SYSTEM] Encryption & Vault Modules Loaded ---")
 except ImportError:
     print("--- [ERROR] Check folder structure and __init__.py files ---")
@@ -44,6 +44,16 @@ def generate_password(length: int = 16) -> str:
     charset = string.ascii_letters + string.digits + string.punctuation
     return ''.join(secrets.choice(charset) for _ in range(length))
 
+def show_all_accounts():
+    """Option 6: List All Services"""
+    records = list_all_services()
+    if not records:
+        print("\n[INFO] The vault is currently empty.")
+    else:
+        print("\n--- Current Stored Services ---")
+        for i, (service, username) in enumerate(records, 1):
+            print(f"{i}. Service: {service} | User: {username}")
+
 def find_existing_entry():
     """Option 1: View Stored Passwords"""
     service = input("Enter the service name to search for: ")
@@ -66,27 +76,19 @@ def create_new_entry():
     print(f"\n[SUCCESS] New random password saved: {password}")
 
 def modify_entry():
-    """Option 3: Update Password (Custom or Random)"""
+    """Option 3: Update Password"""
     service = input("Enter the service name to UPDATE: ")
     username = input("Enter the username: ")
-    
     if retrieve_password(service, username):
-        print("\nUpdate Options:")
-        print("A. Generate a new random password")
-        print("B. Enter a custom password")
-        choice = input("Select choice (A/B): ").upper()
-        
-        if choice == "A":
-            new_pwd = generate_password()
-        else:
-            new_pwd = input("Enter your custom password: ")
-            
+        print("\nUpdate Options: [A] Random [B] Custom")
+        choice = input("Select choice: ").upper()
+        new_pwd = generate_password() if choice == "A" else input("Enter custom password: ")
         new_encrypted = encrypt_password(new_pwd)
         if update_password(service, username, new_encrypted):
-            log_action("admin", f"UPDATED password for {service}")
-            print(f"\n[UPDATED] New password for {service} is now set.")
+            log_action("admin", f"UPDATED {service}")
+            print(f"\n[UPDATED] Record set.")
     else:
-        print(f"\n[ERROR] No record found for {service} to update.")
+        print(f"\n[ERROR] Record not found.")
 
 def remove_entry():
     """Option 4: Delete Password"""
@@ -97,26 +99,26 @@ def remove_entry():
         if delete_password(service, username):
             log_action("admin", f"DELETED {service}")
             print(f"\n[DELETED] Record removed.")
-        else:
-            print("\n[ERROR] Record not found.")
 
 def main():
     if login():
         init_db()
         while True:
             print("\n--- SecureSphere Password Manager ---")
-            print("1. View Stored Passwords")
+            print("1. Search/View Password")
             print("2. Add New Password")
             print("3. Update Password")
             print("4. Delete Password")
-            print("5. Exit")
+            print("5. List All Services")
+            print("6. Exit")
             
-            choice = input("\nSelect (1-5): ")
+            choice = input("\nSelect (1-6): ")
             if choice == "1": find_existing_entry()
             elif choice == "2": create_new_entry()
             elif choice == "3": modify_entry()
             elif choice == "4": remove_entry()
-            elif choice == "5": break
+            elif choice == "5": show_all_accounts()
+            elif choice == "6": break
             else: print("Invalid selection.")
 
 if __name__ == "__main__":
