@@ -33,6 +33,7 @@ def login():
 
 def main():
     # 1. Start the Gatekeeper first
+    # This function MUST be called before anything else
     if login():
         # 2. Only if login is successful, initialize and show menu
         from vault.storage import init_db
@@ -44,4 +45,13 @@ def main():
             print("2. Search for Existing Password")
             print("3. Delete a Password")
             print("4. Exit")
-            # ... (Rest of your menu logic)
+            
+            choice = input("\nSelect (1-4): ")
+            if choice == "1": create_new_entry()
+            elif choice == "2": find_existing_entry()
+            elif choice == "3": remove_entry()
+            elif choice == "4": break
+            else: print("Invalid selection.")
+
+if __name__ == "__main__":
+    main()
