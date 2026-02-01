@@ -1,60 +1,87 @@
 # =================================================================
-# PROJECT: SecureSphere_Password_Manager
-# DESCRIPTION: Main orchestration script with Start-Up Check.
+# SecureSphere Innovations
+# Secure Password Manager
+#
+# Made by Collaborative-Fidelity
+# Copyright (c) 2026 Collaborative-Fidelity
+# All Rights Reserved.
 # =================================================================
 
-import os
-import secrets
 import string
+import secrets
 from datetime import datetime
 
 # Import modules from your project folders
 try:
     from crypto.encryption import encrypt_password, decrypt_password
-    print("--- [SYSTEM] Encryption Modules Loaded Successfully ---")
+    from vault.storage import init_db, store_password, retrieve_password
+    print("--- [SYSTEM] Encryption & Vault Modules Loaded ---")
 except ImportError:
     print("--- [ERROR] Could not find project modules ---")
     print("--- Ensure you have __init__.py files in crypto and vault folders ---")
 
-# --- CONSTANTS ---
 LOG_FILE = "logs.txt"
 
-# --- LOGGING ---
-def log_action(user, action):
+# --- Logging ---
+def log_action(user: str, action: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a") as f:
         f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
 
-# --- PASSWORD GENERATOR ---
-def generate_secure_password(length=16):
-    alphabet = string.ascii_letters + string.digits + string.punctuation
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
+# --- Password Generator ---
+def generate_password(length: int = 16) -> str:
+    if length < 12:
+        raise ValueError("Password length must be at least 12 characters")
 
-# --- MAIN EXECUTION ---
+    charset = (
+        string.ascii_lowercase +
+        string.ascii_uppercase +
+        string.digits +
+        string.punctuation
+    )
+    return ''.join(secrets.choice(charset) for _ in range(length))
+
+# --- Main Execution ---
 def main():
-    print("\n--- SecureSphere Password Manager Starting ---")
-    current_user = "admin" 
-    
-    # 1. Generate a new password
-    raw_pwd = generate_secure_password()
-    print(f"Generated New Password: {raw_pwd}")
-
-    # 2. Encrypt it
+    # Initialize the database (creates table if missing)
     try:
-        encrypted_pwd = encrypt_password(raw_pwd)
-        print(f"Encrypted Version: {encrypted_pwd}")
+        init_db()
+    except NameError:
+        print("[SKIP] Database initialization skipped (vault module not ready).")
 
-        # 3. Log the event
-        log_action(current_user, "Generated and Encrypted a new password.")
-        print("Action Logged Successfully.")
-        print("\n--- SecureSphere Process Complete ---")
-        
-    except Exception as e:
-        print(f"\n[ERROR] Something went wrong: {e}")
+    user = "admin"
+    service = "example.com"
+    username = "admin_user"
+
+    print("\n--- SecureSphere Password Manager Starting ---")
+
+    # 1. Generate and encrypt password
+    password = generate_password()
+    print(f"Generated New Password: {password}")
+    
+    encrypted = encrypt_password(password)
+    print(f"Encrypted Version: {encrypted}")
+
+    # 2. Store in SQLite vault
+    try:
+        store_password(service, username, encrypted)
+        log_action(user, f"Stored password for {service}")
+        print("Password stored and logged successfully.")
+    except NameError:
+        print("[ERROR] Could not store password (vault functions missing).")
+
+    # 3. Demonstration: retrieving the password
+    try:
+        retrieved_enc = retrieve_password(service, username)
+        if retrieved_enc:
+            decrypted = decrypt_password(retrieved_enc)
+            print(f"Decrypted Password for {service}: {decrypted}")
+    except NameError:
+        pass
+
+    print("\n--- SecureSphere Process Complete ---")
 
 # --- THE START BUTTON ---
 # This part MUST be at the very bottom and have NO spaces before it.
 if __name__ == "__main__":
     main()
-
-
