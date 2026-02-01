@@ -45,6 +45,7 @@ def generate_password(length: int = 16) -> str:
     return ''.join(secrets.choice(charset) for _ in range(length))
 
 def find_existing_entry():
+    """Option 1: View Stored Passwords"""
     service = input("Enter the service name to search for: ")
     username = input("Enter the username: ")
     encrypted_pwd = retrieve_password(service, username)
@@ -55,28 +56,40 @@ def find_existing_entry():
         print("\n[NOT FOUND] No record exists.")
 
 def create_new_entry():
+    """Option 2: Add New Password"""
     service = input("Enter the service name: ")
     username = input("Enter the username: ")
     password = generate_password()
     encrypted = encrypt_password(password)
     store_password(service, username, encrypted)
     log_action("admin", f"Created password for {service}")
-    print(f"\n[SUCCESS] New password saved: {password}")
+    print(f"\n[SUCCESS] New random password saved: {password}")
 
 def modify_entry():
+    """Option 3: Update Password (Custom or Random)"""
     service = input("Enter the service name to UPDATE: ")
     username = input("Enter the username: ")
-    # Check if it exists first
+    
     if retrieve_password(service, username):
-        new_password = generate_password()
-        new_encrypted = encrypt_password(new_password)
+        print("\nUpdate Options:")
+        print("A. Generate a new random password")
+        print("B. Enter a custom password")
+        choice = input("Select choice (A/B): ").upper()
+        
+        if choice == "A":
+            new_pwd = generate_password()
+        else:
+            new_pwd = input("Enter your custom password: ")
+            
+        new_encrypted = encrypt_password(new_pwd)
         if update_password(service, username, new_encrypted):
             log_action("admin", f"UPDATED password for {service}")
-            print(f"\n[UPDATED] New password for {service}: {new_password}")
+            print(f"\n[UPDATED] New password for {service} is now set.")
     else:
         print(f"\n[ERROR] No record found for {service} to update.")
 
 def remove_entry():
+    """Option 4: Delete Password"""
     service = input("Enter the service name to DELETE: ")
     username = input("Enter the username: ")
     confirm = input(f"Are you sure you want to delete {service}? (y/n): ")
