@@ -1,16 +1,42 @@
-KEY_FILE = "secure_key.key"  # File for storing the encryption key
-MASTER_USERS = {"admin": "SecureSphere2026"}  # Default admin login credentials
+# ================================================================
+# SecureSphere Innovations
+# Secure Password Manager
+#
+# Made by Collaborative-Fidelity
+# Copyright (c) 2026 Collaborative-Fidelity
+# All Rights Reserved.
+#
+# Module: encryption.py
+# Purpose: Centralized encryption and decryption logic
+# ================================================================
 
-# --- ENCRYPTION ---
-# Generate and save a key if KEY_FILE doesn't exist
-if not os.path.exists(KEY_FILE):
-    with open(KEY_FILE, "wb") as key_file:
-        key_file.write(Fernet.generate_key())  # Generate a secure key
+import os
+from cryptography.fernet import Fernet
 
-# Load the encryption key
-with open(KEY_FILE, "rb") as key_file:
-    ENCRYPTION_KEY = key_file.read()
+KEY_FILE = "secure_key.key"
 
-# Initialize Fernet for encryption and decryption
-fernet = Fernet(ENCRYPTION_KEY)
+def load_or_create_key() -> bytes:
+    """
+    Loads an existing encryption key or creates one if missing.
+    """
+    if not os.path.exists(KEY_FILE):
+        with open(KEY_FILE, "wb") as key_file:
+            key_file.write(Fernet.generate_key())
 
+    with open(KEY_FILE, "rb") as key_file:
+        return key_file.read()
+
+# Initialize Fernet instance once
+FERNET = Fernet(load_or_create_key())
+
+def encrypt_password(plaintext_password: str) -> bytes:
+    """
+    Encrypt a plaintext password.
+    """
+    return FERNET.encrypt(plaintext_password.encode())
+
+def decrypt_password(encrypted_password: bytes) -> str:
+    """
+    Decrypt an encrypted password.
+    """
+    return FERNET.decrypt(encrypted_password).decode()
