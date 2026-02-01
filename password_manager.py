@@ -12,7 +12,8 @@ import secrets
 from datetime import datetime
 
 from crypto.encryption import encrypt_password, decrypt_password
-from vault.storage import init_db, store_password, retrieve_password
+from crypto.vault import init_db, store_password, retrieve_password
+
 LOG_FILE = "logs.txt"
 
 # ------------------------------------------------
@@ -20,8 +21,11 @@ LOG_FILE = "logs.txt"
 # ------------------------------------------------
 def log_action(user: str, action: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open(LOG_FILE, "a") as f:
-        f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
+    try:
+        with open(LOG_FILE, "a") as f:
+            f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
+    except Exception as e:
+        print("ERROR writing to log file:", e)
 
 # ------------------------------------------------
 # Password Generator
@@ -43,24 +47,16 @@ def generate_password(length: int = 16) -> str:
 # Main Execution
 # ------------------------------------------------
 def main():
+    print("Starting SecureSphere Password Manager...")  # Debug print
+
     # Initialize the database (creates table if missing)
-    init_db()
+    try:
+        init_db()
+        print("Database initialized successfully.")
+    except Exception as e:
+        print("ERROR initializing database:", e)
+        return
 
     user = "admin"
     service = "example.com"
-    username = "admin_user"
-
-    # Generate and encrypt password
-    password = generate_password()
-    encrypted = encrypt_password(password)
-
-    # Store in SQLite vault
-    store_password(service, username, encrypted)
-    log_action(user, f"Stored password for {service}")
-
-    # Demonstration: retrieving the password (optional)
-    retrieved_enc = retrieve_password(service, username)
-    if retrieved_enc:
-        decrypted = decrypt_password(retrieved_enc)
-        prin
-
+    username =
