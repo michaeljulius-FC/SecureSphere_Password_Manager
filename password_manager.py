@@ -1,116 +1,46 @@
-# ================================================================
-# SecureSphere Innovations
-# Secure Password Manager
-#
-# Made by Collaborative-Fidelity
-# Copyright (c) 2026 Collaborative-Fidelity
-# All Rights Reserved.
-# ================================================================
+# =================================================================
+# PROJECT: SecureSphere_Password_Manager
+# DESCRIPTION: Main orchestration script.
+# =================================================================
 
-import string
+import os
 import secrets
+import string
 from datetime import datetime
-import sqlite3
-
+# This is the important part: importing from your new module!
 from crypto.encryption import encrypt_password, decrypt_password
 
-DB_FILE = "vault/passwords.db"
-LOG_FILE = "logs/logs.txt"
+# --- CONSTANTS ---
+LOG_FILE = "logs.txt"
+MASTER_USERS = {"admin": "SecureSphere2026"}
 
-# ------------------------------------------------
-# Logging
-# ------------------------------------------------
-def log_action(user: str, action: str):
+# --- LOGGING ---
+def log_action(user, action):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a") as f:
         f.write(f"[{timestamp}] USER: {user} | ACTION: {action}\n")
 
-# ------------------------------------------------
-# Password Generator
-# ------------------------------------------------
-def generate_password(length: int = 16) -> str:
-    if length < 12:
-        raise ValueError("Password length must be at least 12 characters")
+# --- PASSWORD GENERATOR ---
+def generate_secure_password(length=16):
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-    charset = (
-        string.ascii_lowercase +
-        string.ascii_uppercase +
-        string.digits +
-        string.punctuation
-    )
-    return ''.join(secrets.choice(charset) for _ in range(length))
-
-# ------------------------------------------------
-# Database Functions
-# ------------------------------------------------
-def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS passwords (
-            service TEXT NOT NULL,
-            username TEXT NOT NULL,
-            password BLOB NOT NULL,
-            PRIMARY KEY (service, username)
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-def store_password(service: str, username: str, encrypted_password: bytes):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT OR REPLACE INTO passwords (service, username, password)
-        VALUES (?, ?, ?)
-    ''', (service, username, encrypted_password))
-    conn.commit()
-    conn.close()
-
-def retrieve_password(service: str, username: str):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT password FROM passwords
-        WHERE service = ? AND username = ?
-    ''', (service, username))
-    result = cursor.fetchone()
-    conn.close()
-    if result:
-        return result[0]
-    return None
-
-# ------------------------------------------------
-# Main Execution
-# ------------------------------------------------
+# --- MAIN EXECUTION ---
 def main():
-    # Initialize the database (creates table if missing)
-    init_db()
+    print("--- SecureSphere Password Manager ---")
+    current_user = "admin" # Simulated login for now
+    
+    # 1. Generate a new password
+    raw_pwd = generate_secure_password()
+    print(f"Generated New Password: {raw_pwd}")
 
-    user = "admin"
-    service = "example.com"
-    username = "admin_user"
+    # 2. Encrypt it using our new module
+    encrypted_pwd = encrypt_password(raw_pwd)
+    print(f"Encrypted Version: {encrypted_pwd}")
 
-    # Generate and encrypt password
-    password = generate_password()
-    encrypted = encrypt_password(password)
+    # 3. Log the event
+    log_action(current_user, "Generated and Encrypted a new password.")
+    print("Action Logged Successfully.")
 
-    # Store in SQLite vault
-    store_password(service, username, encrypted)
-    log_action(user, f"Stored password for {service}")
-
-    # Print generated password (displayed once)
-    print("Password generated and stored securely.")
-    print("Generated password (displayed once):", password)
-
-    # Demonstration: retrieving the password (optional)
-    retrieved_enc = retrieve_password(service, username)
-    if retrieved_enc:
-        decrypted = decrypt_password(retrieved_enc)
-        print("Retrieved password:", decrypted)
-
-# ------------------------------------------------
-# Run main if script executed directly
-# ------------------------------------------------
 if __name__ == "__main__":
     main()
