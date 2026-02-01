@@ -1,20 +1,14 @@
-# =================================================================
-# SecureSphere Innovations
-# Secure Password Manager (Search Enabled)
-# =================================================================
-
 import string
 import secrets
 from datetime import datetime
 
-# Import modules from your project folders
+# Import modules
 try:
     from crypto.encryption import encrypt_password, decrypt_password
-    from vault.storage import init_db, store_password, retrieve_password
+    from vault.storage import init_db, store_password, retrieve_password, delete_password
     print("--- [SYSTEM] Encryption & Vault Modules Loaded ---")
 except ImportError:
-    print("--- [ERROR] Could not find project modules ---")
-    print("--- Ensure you have __init__.py files in crypto and vault folders ---")
+    print("--- [ERROR] Check your folder structure and __init__.py files ---")
 
 LOG_FILE = "logs.txt"
 
@@ -28,61 +22,59 @@ def generate_password(length: int = 16) -> str:
     return ''.join(secrets.choice(charset) for _ in range(length))
 
 def create_new_entry():
-    """Logic for generating and saving a new password."""
     service = input("Enter the service name (e.g., Netflix): ")
     username = input("Enter the username: ")
-    
     password = generate_password()
     encrypted = encrypt_password(password)
-    
-    # Save to Database
-    try:
-        store_password(service, username, encrypted)
-        log_action("admin", f"Created new password for {service}")
-        print(f"\n[SUCCESS] New password for {service} generated!")
-        print(f"Password: {password}")
-    except Exception as e:
-        print(f"[ERROR] Failed to save password: {e}")
+    store_password(service, username, encrypted)
+    log_action("admin", f"Created new password for {service}")
+    print(f"\n[SUCCESS] Password for {service} saved: {password}")
 
 def find_existing_entry():
-    """Logic for searching and decrypting a password."""
     service = input("Enter the service name to search for: ")
     username = input("Enter the username: ")
+    encrypted_pwd = retrieve_password(service, username)
+    if encrypted_pwd:
+        decrypted = decrypt_password(encrypted_pwd)
+        print(f"\n[FOUND] Password for {service} ({username}): {decrypted}")
+    else:
+        print(f"\n[NOT FOUND] No record for {service}.")
+
+def remove_entry():
+    """New logic to delete a record."""
+    service = input("Enter the service name to DELETE: ")
+    username = input("Enter the username: ")
+    confirm = input(f"Are you sure you want to delete {service}? (y/n): ")
     
-    try:
-        encrypted_pwd = retrieve_password(service, username)
-        if encrypted_pwd:
-            decrypted = decrypt_password(encrypted_pwd)
-            print(f"\n[FOUND] Password for {service} ({username}): {decrypted}")
+    if confirm.lower() == 'y':
+        if delete_password(service, username):
+            log_action("admin", f"DELETED record for {service}")
+            print(f"\n[DELETED] Record for {service} has been removed.")
         else:
-            print(f"\n[NOT FOUND] No record for {service}.")
-    except Exception as e:
-        print(f"[ERROR] Search failed: {e}")
+            print(f"\n[ERROR] No record found to delete for {service}.")
 
 def main():
-    # Initialize the database
-    try:
-        init_db()
-    except Exception:
-        pass
-    
-    print("\n--- SecureSphere Password Manager ---")
-    print("1. Generate & Save New Password")
-    print("2. Search for Existing Password")
-    print("3. Exit")
-    
-    choice = input("\nSelect an option (1-3): ")
-    
-    if choice == "1":
-        create_new_entry()
-    elif choice == "2":
-        find_existing_entry()
-    elif choice == "3":
-        print("Exiting SecureSphere...")
-    else:
-        print("Invalid selection.")
+    init_db()
+    while True:
+        print("\n--- SecureSphere Password Manager ---")
+        print("1. Generate & Save New Password")
+        print("2. Search for Existing Password")
+        print("3. Delete a Password")
+        print("4. Exit")
+        
+        choice = input("\nSelect an option (1-4): ")
+        
+        if choice == "1":
+            create_new_entry()
+        elif choice == "2":
+            find_existing_entry()
+        elif choice == "3":
+            remove_entry()
+        elif choice == "4":
+            print("Exiting SecureSphere...")
+            break
+        else:
+            print("Invalid selection.")
 
-# --- THE START BUTTON ---
-# Look closely: the 'if' is on the left, but 'main()' is indented.
 if __name__ == "__main__":
     main()
