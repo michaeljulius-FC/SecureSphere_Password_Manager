@@ -1,3 +1,4 @@
+print("SYSTEM STARTING...")
 # =================================================================
 # PROJECT: SecureSphere_Password_Manager
 # DESCRIPTION: Main orchestration script.
