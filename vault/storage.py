@@ -67,3 +67,12 @@ def delete_password(service, username):
     changes = conn.total_changes
     conn.close()
     return changes > 0
+
+def list_all_services():
+    """Retrieves all service names and usernames from the database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT service, username FROM credentials')
+    results = cursor.fetchall()
+    conn.close()
+    return results
