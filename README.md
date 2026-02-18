@@ -46,3 +46,4 @@ python setup_master.py
 
 🛡️ Security Note
 This project uses a .gitignore to ensure that sensitive local files—such as master.hash, secure_key.key, and passwords.db—are never uploaded to the public repository.
+This will be used for future projects
